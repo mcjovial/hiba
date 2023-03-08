@@ -1,5 +1,12 @@
 import { Transform, TransformFnParams } from 'class-transformer';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Plan } from 'src/plans/entities/plan.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 export enum Position {
   LEFT = 'left',
@@ -36,8 +43,12 @@ export class User {
   @Column({ nullable: true })
   sponsor?: string;
 
-  @Column({ nullable: true })
-  plan: string;
+  @OneToOne(() => Plan, {
+    eager: true,
+    cascade: true,
+  })
+  @JoinColumn()
+  plan: Plan;
 
   @Column({ type: 'enum', enum: Position })
   position: string;

@@ -21,8 +21,6 @@ export class UsersService {
       await this.userRepository.save(newUser);
       return newUser;
     } catch (error) {
-      console.log(error.detail);
-
       if (error?.code === PostgresErrorCode.UniqueViolation) {
         throw new HttpException(
           'User with that username already exists',

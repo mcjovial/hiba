@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 
 export class CustomNotFoundException extends NotFoundException {
-  constructor(name: string, postId: number | string) {
-    super(`${name} with id ${postId} not found`);
+  constructor(name: string, id?: number | string) {
+    super(`${name} ${id ? `with id ${id} ` : ''}not found`);
   }
 }
