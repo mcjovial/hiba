@@ -1,9 +1,11 @@
 import { Transform, TransformFnParams } from 'class-transformer';
 import { Plan } from 'src/plans/entities/plan.entity';
+import { Transaction } from 'src/transactions/entities/transaction.entity';
 import {
   Column,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -37,11 +39,21 @@ export class User {
   @Column()
   contact: number;
 
-  @Column()
-  referrer: string;
+  @OneToOne(() => User, (user: User) => user.id, {
+    nullable: true,
+    // eager: true,
+    // cascade: true,
+  })
+  @JoinColumn()
+  referrer: User;
 
-  @Column({ nullable: true })
-  sponsor?: string;
+  @OneToOne(() => User, (user: User) => user.id, {
+    nullable: true,
+    // eager: true,
+    // cascade: true,
+  })
+  @JoinColumn()
+  sponsor?: User;
 
   @OneToOne(() => Plan, {
     eager: true,
@@ -97,4 +109,7 @@ export class User {
 
   @Column({ nullable: true })
   bankName: string;
+
+  @OneToMany(() => Transaction, (transaction: Transaction) => transaction.user)
+  public transactions?: Transaction[];
 }

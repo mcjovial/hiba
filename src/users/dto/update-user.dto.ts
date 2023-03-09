@@ -6,6 +6,7 @@ import {
   IsString,
   Length,
 } from 'class-validator';
+import { User } from '../entities/user.entity';
 
 export default class UpdateUserDto {
   @IsString()
@@ -26,7 +27,7 @@ export default class UpdateUserDto {
   role?: string;
 
   @IsString()
-  referrer: string;
+  referrer: User;
 
   @IsString()
   position: string;
