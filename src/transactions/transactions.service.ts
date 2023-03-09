@@ -14,6 +14,7 @@ export class TransactionsService {
   ) {}
 
   async create(createTransactionDto: CreateTransactionDto) {
+    // createTransactionDto.userId
     try {
       const newTransaction =
         this.transactionRepository.create(createTransactionDto);
@@ -32,11 +33,12 @@ export class TransactionsService {
   }
 
   async findUserTransactions(userId: string) {
-    return await this.transactionRepository.find({
-      // where: {
-      //   user: userId,
-      // },
-    });
+    return await this.transactionRepository
+      .createQueryBuilder()
+      .select('transaction')
+      .from(Transaction, 'transaction')
+      .where('transaction.user = :id', { id: userId })
+      .getMany();
   }
 
   async findOne(id: string) {

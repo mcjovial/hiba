@@ -26,9 +26,8 @@ export class TransactionsController {
   }
 
   @Post('user')
-  findUserTransactions(@Body() userId: string) {
-    console.log('....', userId);
-    return this.transactionsService.findUserTransactions(userId);
+  findUserTransactions(@Body() body: any) {
+    return this.transactionsService.findUserTransactions(body.userId);
   }
 
   @Get(':id')

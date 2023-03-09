@@ -4,7 +4,6 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -12,9 +11,6 @@ import {
 export class Transaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
-  // @Column()
-  // userId: string;
 
   @ManyToOne(() => User, (user: User) => user.transactions, {
     eager: true,
