@@ -5,11 +5,9 @@ export class CreateBvLogDto {
   @IsString()
   user: User;
   @IsEnum(Position)
-  position: Position;
+  position: string;
   @IsNumber()
   amount: number;
-  @IsString()
-  trxType: string;
   @IsString()
   details: string;
 }

@@ -39,7 +39,4 @@ export class Transaction {
 
   @Column('text', { nullable: true })
   details: string;
-
-  @Column('text', { nullable: true })
-  remark: string;
 }

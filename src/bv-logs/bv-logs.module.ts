@@ -8,5 +8,6 @@ import { BvLog } from './entities/bv-log.entity';
   imports: [TypeOrmModule.forFeature([BvLog])],
   controllers: [BvLogsController],
   providers: [BvLogsService],
+  exports: [BvLogsService],
 })
 export class BvLogsModule {}

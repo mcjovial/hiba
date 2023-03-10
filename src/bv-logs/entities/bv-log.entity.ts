@@ -26,8 +26,5 @@ export class BvLog {
   amount: number;
 
   @Column('text', { nullable: true })
-  trxType: string;
-
-  @Column('text', { nullable: true })
   details: string;
 }

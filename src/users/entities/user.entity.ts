@@ -69,37 +69,40 @@ export class User {
   balance: number;
 
   @Column('int', { default: 0 })
-  totalReferralBonus: number;
+  total_referral_bonus: number;
 
   @Column('int', { default: 0 })
-  totalBonus: number;
+  total_bonus: number;
+
+  // @Column('int', { default: 0 })
+  // totalBV: number;
 
   @Column('int', { default: 0 })
-  totalBV: number;
+  total_bv_left: number;
 
   @Column('int', { default: 0 })
-  totalBVLeft: number;
+  total_bv_right: number;
 
   @Column('int', { default: 0 })
-  totalBVRight: number;
+  upgrade_wallet: number;
 
   @Column('int', { default: 0 })
-  upgradeWallet: number;
+  shopping_wallet: number;
 
   @Column('int', { default: 0 })
-  shoppingWallet: number;
+  total_investment: number;
 
   @Column('int', { default: 0 })
-  totalInvestment: number;
+  matching_bonus: number;
 
   @Column('int', { default: 0 })
-  matchingBonus: number;
-
-  @Column('int', { default: 0 })
-  binaryBonus: number;
+  binary_bonus: number;
 
   @Column('boolean', { default: false })
   isHibaActive: boolean;
+
+  @Column('boolean', { default: true })
+  isHibaUser: boolean;
 
   @Column({ nullable: true })
   bankAccountNumber: string;

@@ -7,33 +7,29 @@ export class CreateTransactionDto {
 
   @IsNumber()
   @IsOptional()
-  amount: number;
+  amount?: number;
 
   @IsNumber()
   @IsOptional()
-  charge: number;
+  charge?: number;
 
   @IsNumber()
   @IsOptional()
-  postBalance: number;
+  postBalance?: number;
 
   @IsNumber()
   @IsOptional()
-  preBalance: number;
+  preBalance?: number;
 
   @IsString()
   @IsOptional()
-  trx: string;
+  trx?: string;
 
   @IsString()
   @IsOptional()
-  trxType: string;
+  trxType?: string;
 
   @IsString()
   @IsOptional()
-  details: string;
-
-  @IsString()
-  @IsOptional()
-  remark: string;
+  details?: string;
 }
