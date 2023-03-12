@@ -35,7 +35,7 @@ export class DepositsService {
     const purpose = 'plan-subscription';
     const email = 'emmanuelelias@gmail.com';
     const user = 'hq9f9w7v37dnd8edhdb8e';
-    const transaction = this.paystack.initializedTransaction({
+    const transaction = await this.paystack.initializedTransaction({
       amount: amount * 100,
       email,
       metadata: { purpose, plan, user },
@@ -49,7 +49,7 @@ export class DepositsService {
   }
 
   async verifySubscription(trxref: string) {
-    const transaction = this.paystack.verifyTransaction(trxref);
+    const transaction = await this.paystack.verifyTransaction(trxref);
 
     if (!transaction.status) {
       throw `${transaction.message}`;
