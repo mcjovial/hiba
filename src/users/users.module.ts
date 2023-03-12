@@ -6,12 +6,14 @@ import { User } from './entities/user.entity';
 import { Plan } from 'src/plans/entities/plan.entity';
 import { TransactionsModule } from 'src/transactions/transactions.module';
 import { BvLogsModule } from 'src/bv-logs/bv-logs.module';
+import { PlansModule } from 'src/plans/plans.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Plan]),
     TransactionsModule,
     BvLogsModule,
+    PlansModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],

@@ -6,29 +6,35 @@ import {
   IsString,
   Length,
 } from 'class-validator';
+import { Plan } from 'src/plans/entities/plan.entity';
 import { User } from '../entities/user.entity';
 
 export default class UpdateUserDto {
   @IsString()
-  name: string;
+  @IsOptional()
+  name?: string;
 
   @IsEmail()
-  email: string;
+  @IsOptional()
+  email?: string;
 
   @IsNotEmpty()
   @Length(6, 20)
-  password: string;
+  password?: string;
 
   @IsNumber()
-  contact: number;
+  @IsOptional()
+  contact?: number;
 
   @IsString()
   @IsOptional()
   role?: string;
 
   @IsString()
-  referrer: User;
+  @IsOptional()
+  planId?: string;
 
   @IsString()
-  position: string;
+  @IsOptional()
+  plan?: Plan;
 }

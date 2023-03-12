@@ -2,12 +2,13 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BvLogsService } from 'src/bv-logs/bv-logs.service';
 import { generateTrx } from 'src/common/helpers';
+import { PlansService } from 'src/plans/plans.service';
 import { TransactionsService } from 'src/transactions/transactions.service';
 import { Repository } from 'typeorm';
 import { CustomNotFoundException } from './customNotFound.exception';
 import CreateUserDto from './dto/create-user.dto';
 import UpdateUserDto from './dto/update-user.dto';
-import { Position, User } from './entities/user.entity';
+import { User } from './entities/user.entity';
 import { PostgresErrorCode } from './postgresErrorCode.enum';
 @Injectable()
 export class UsersService {
@@ -16,6 +17,7 @@ export class UsersService {
     private userRepository: Repository<User>,
     private readonly transactionService: TransactionsService,
     private readonly bvLogService: BvLogsService,
+    private readonly planService: PlansService,
   ) {}
 
   async create(userData: CreateUserDto) {
@@ -40,14 +42,6 @@ export class UsersService {
 
   async getAllUsers() {
     const [items, count] = await this.userRepository.findAndCount({});
-    // const tryi = await this.incrementUser(
-    //   '396b1e2d-7214-435f-8122-cfd9b8b60635',
-    //   'totalBonus',
-    //   5,
-    // );
-
-    const tryi = await this.massIncrement(6);
-    console.log(tryi);
     return {
       items,
       count,
@@ -59,6 +53,7 @@ export class UsersService {
   }
 
   async updateUser(id: string, data: UpdateUserDto) {
+    data.plan = await this.planService.findOne(data.planId);
     await this.userRepository.update(id, data);
     const updatedTask = await this.userRepository.find({
       where: { id },
@@ -104,8 +99,64 @@ export class UsersService {
     return heap;
   }
 
-  async incrementUser(id: string, field: string, value: number) {
-    return await this.userRepository.increment({ id }, field, value);
+  async creditUser(id: string, amount: number) {
+    const user = await this.findOne(id);
+    // pre-transaction
+    const pre_transaction = await this.transactionService.create({
+      user: user,
+      preBalance: user.balance,
+    });
+
+    await this.userRepository.increment({ id }, 'balance', amount);
+
+    // post-transaction
+    await this.transactionService.update(pre_transaction.id, {
+      charge: 0,
+      postBalance: (await this.findOne(id)).balance,
+      amount,
+      trx: generateTrx(),
+      trxType: '+',
+      details: 'paystack_deposit',
+    });
+    return true;
+  }
+
+  async debitUser(id: string, amount: number, purpose: string) {
+    const user = await this.findOne(id);
+    // pre-transaction
+    const pre_transaction = await this.transactionService.create({
+      user: user,
+      preBalance: user.balance,
+    });
+
+    await this.userRepository.decrement({ id }, 'balance', amount);
+
+    // post-transaction
+    await this.transactionService.update(pre_transaction.id, {
+      charge: 0,
+      postBalance: (await this.findOne(id)).balance,
+      amount,
+      trx: generateTrx(),
+      trxType: '+',
+      details: purpose,
+    });
+    return true;
+  }
+
+  async subscribeUserToPlan(planId: string, userId: string) {
+    const plan = await this.planService.findOne(planId);
+    await this.userRepository
+      .createQueryBuilder('user')
+      .update(User)
+      .set({
+        plan: plan,
+        balance: () => `balance + ${plan.bv}`,
+        shopping_wallet: () => `shopping_wallet + ${plan.coupon}`,
+      })
+      .where('id = :id', { id: userId })
+      .execute();
+
+    this.updateBV(userId);
   }
 
   async massIncrement(num: number) {
@@ -339,7 +390,7 @@ export class UsersService {
     return (amount * percentge) / 100;
   }
 
-  async updateBV(id: string, bv: any, details: any, position: string) {
+  async updateBV(id: string) {
     // const reward = await getComission(bv, 15);
     const user = await this.findOne(id);
     if (user) {
@@ -411,7 +462,7 @@ export class UsersService {
         await this.bvLogService.create({
           user: user.referrer,
           amount: reward,
-          position,
+          position: user.position,
           details: 'group_sales_bonus',
         });
       }

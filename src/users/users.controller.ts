@@ -21,7 +21,6 @@ export class UsersController {
 
   @Post()
   async register(@Body() registerationData: CreateUserDto) {
-    console.log(registerationData);
     const result = await this.usersService.create(registerationData);
     return { message: 'User Created Successfully', result };
   }

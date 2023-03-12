@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { DepositsService } from './deposits.service';
 import { CreateDepositDto } from './dto/create-deposit.dto';
+import { SubscribeDto } from './dto/subscription.dto';
 import { UpdateDepositDto } from './dto/update-deposit.dto';
 
 @Controller('deposits')
@@ -18,6 +19,11 @@ export class DepositsController {
   @Post()
   create(@Body() createDepositDto: CreateDepositDto) {
     return this.depositsService.create(createDepositDto);
+  }
+
+  @Post('paystack')
+  subscribe(@Body() subscribeDto: SubscribeDto) {
+    return this.depositsService.subscribe(subscribeDto);
   }
 
   @Get()

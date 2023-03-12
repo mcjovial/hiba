@@ -32,12 +32,12 @@ export class TransactionsService {
     return await this.transactionRepository.find({});
   }
 
-  async findUserTransactions(userId: string) {
+  async findForOne(id: string) {
     return await this.transactionRepository
       .createQueryBuilder()
       .select('transaction')
       .from(Transaction, 'transaction')
-      .where('transaction.user = :id', { id: userId })
+      .where('transaction.user = :id', { id })
       .getMany();
   }
 

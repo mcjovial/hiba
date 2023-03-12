@@ -16,7 +16,7 @@ services:
     volumes:
       - .:/usr/src/app # any change to base folder should be reflected
       - /usr/src/app/node_modules
-    command: npm run start:dev auth # overrides CMD from dockerfile
+    command: yarn start:dev # overrides CMD from dockerfile
 
   postgres:
     image: postgres:10.4
