@@ -26,10 +26,10 @@ export default class CreateUserDto {
   @IsOptional()
   role?: string;
 
-  // @IsString()
-  // @IsOptional()
-  // referrer?: User;
+  @IsString()
+  @IsOptional()
+  referrer?: User;
 
-  // @IsString()
-  // position: string;
+  @IsString()
+  position: string;
 }

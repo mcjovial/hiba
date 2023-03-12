@@ -7,6 +7,7 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { BvLogsModule } from './bv-logs/bv-logs.module';
 import { MlmModule } from './mlm/mlm.module';
 import { DepositsModule } from './deposits/deposits.module';
+import { WithdrawalsModule } from './withdrawals/withdrawals.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { DepositsModule } from './deposits/deposits.module';
     BvLogsModule,
     MlmModule,
     DepositsModule,
+    WithdrawalsModule,
   ],
   controllers: [],
   providers: [],

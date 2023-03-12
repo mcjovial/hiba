@@ -2,6 +2,7 @@ import { Transform, TransformFnParams } from 'class-transformer';
 import { Deposit } from 'src/deposits/entities/deposit.entity';
 import { Plan } from 'src/plans/entities/plan.entity';
 import { Transaction } from 'src/transactions/entities/transaction.entity';
+import { Withdrawal } from 'src/withdrawals/entities/withdrawal.entity';
 import {
   Column,
   Entity,
@@ -119,4 +120,7 @@ export class User {
 
   @OneToMany(() => Deposit, (deposit: Deposit) => deposit.user)
   public deposits?: Deposit[];
+
+  @OneToMany(() => Withdrawal, (withdrawal: Withdrawal) => withdrawal.user)
+  public withdrawals?: Withdrawal[];
 }
