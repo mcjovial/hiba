@@ -8,10 +8,20 @@ import { BvLogsModule } from './bv-logs/bv-logs.module';
 import { MlmModule } from './mlm/mlm.module';
 import { DepositsModule } from './deposits/deposits.module';
 import { WithdrawalsModule } from './withdrawals/withdrawals.module';
+import { AuthModule } from './auth/auth.module';
+import * as Joi from 'joi';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: Joi.object({
+        JWT_ACCESS_TOKEN_SECRET: Joi.string().required(),
+        JWT_ACCESS_TOKEN_EXPIRATION_TIME: Joi.string().required(),
+        JWT_REFRESH_TOKEN_SECRET: Joi.string().required(),
+        JWT_REFRESH_TOKEN_EXPIRATION_TIME: Joi.string().required(),
+      }),
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
@@ -25,6 +35,7 @@ import { WithdrawalsModule } from './withdrawals/withdrawals.module';
     MlmModule,
     DepositsModule,
     WithdrawalsModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],

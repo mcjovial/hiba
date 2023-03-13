@@ -31,5 +31,6 @@ export default class CreateUserDto {
   referrer?: User;
 
   @IsString()
-  position: string;
+  @IsOptional()
+  position?: string;
 }

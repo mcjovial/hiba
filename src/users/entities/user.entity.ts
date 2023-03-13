@@ -1,4 +1,4 @@
-import { Transform, TransformFnParams } from 'class-transformer';
+import { Exclude, Transform, TransformFnParams } from 'class-transformer';
 import { Deposit } from 'src/deposits/entities/deposit.entity';
 import { Plan } from 'src/plans/entities/plan.entity';
 import { Transaction } from 'src/transactions/entities/transaction.entity';
@@ -29,7 +29,7 @@ export class User {
   @Transform(({ value }: TransformFnParams) => value?.trim())
   username: string;
 
-  @Column()
+  @Column({ unique: true })
   email: string;
 
   @Column()
@@ -64,7 +64,7 @@ export class User {
   @JoinColumn()
   plan: Plan;
 
-  @Column({ type: 'enum', enum: Position })
+  @Column({ type: 'enum', enum: Position, nullable: true })
   position: string;
 
   @Column('int', { default: 0 })
@@ -123,4 +123,10 @@ export class User {
 
   @OneToMany(() => Withdrawal, (withdrawal: Withdrawal) => withdrawal.user)
   public withdrawals?: Withdrawal[];
+
+  @Column({
+    nullable: true,
+  })
+  @Exclude()
+  public currentHashedRefreshToken?: string;
 }

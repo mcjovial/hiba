@@ -9,7 +9,8 @@ import { CustomNotFoundException } from './customNotFound.exception';
 import CreateUserDto from './dto/create-user.dto';
 import UpdateUserDto from './dto/update-user.dto';
 import { User } from './entities/user.entity';
-import { PostgresErrorCode } from './postgresErrorCode.enum';
+import * as bcrypt from 'bcrypt';
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -22,22 +23,9 @@ export class UsersService {
 
   async create(userData: CreateUserDto) {
     userData.role = 'customer';
-    try {
-      const newUser = this.userRepository.create(userData);
-      await this.userRepository.save(newUser);
-      return newUser;
-    } catch (error) {
-      if (error?.code === PostgresErrorCode.UniqueViolation) {
-        throw new HttpException(
-          'User with that username already exists',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-      throw new HttpException(
-        'Something went wrong',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    const newUser = this.userRepository.create(userData);
+    await this.userRepository.save(newUser);
+    return newUser;
   }
 
   async getAllUsers() {
@@ -49,7 +37,10 @@ export class UsersService {
   }
 
   async findOne(id: string) {
-    return await this.userRepository.findOne({ where: { id } });
+    return await this.userRepository.findOne({
+      where: { id },
+      relations: ['referrer', 'sponsor'],
+    });
   }
 
   async updateUser(id: string, data: UpdateUserDto) {
@@ -65,11 +56,48 @@ export class UsersService {
     throw new CustomNotFoundException('Task', id);
   }
 
+  async getByEmail(email: string) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (user) {
+      return user;
+    }
+    throw new HttpException(
+      'User with this email does not exist',
+      HttpStatus.NOT_FOUND,
+    );
+  }
+
   async deleteUser(id: string) {
     const deleteResponse = await this.userRepository.delete(id);
     if (!deleteResponse.affected) {
       throw new CustomNotFoundException('Task', id);
     }
+  }
+
+  async setCurrentRefreshToken(refreshToken: string, userId: string) {
+    const currentHashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.userRepository.update(userId, {
+      currentHashedRefreshToken,
+    });
+  }
+
+  async getUserIfRefreshTokenMatches(refreshToken: string, userId: string) {
+    const user = await this.findOne(userId);
+
+    const isRefreshTokenMatching = await bcrypt.compare(
+      refreshToken,
+      user.currentHashedRefreshToken,
+    );
+
+    if (isRefreshTokenMatching) {
+      return user;
+    }
+  }
+
+  async removeRefreshToken(userId: string) {
+    return this.userRepository.update(userId, {
+      currentHashedRefreshToken: null,
+    });
   }
 
   async getHibaUsersCount() {
