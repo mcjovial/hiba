@@ -1,4 +1,5 @@
 import { Exclude, Transform, TransformFnParams } from 'class-transformer';
+import { Role } from 'src/common/enums';
 import { Deposit } from 'src/deposits/entities/deposit.entity';
 import { Plan } from 'src/plans/entities/plan.entity';
 import { Transaction } from 'src/transactions/entities/transaction.entity';
@@ -7,6 +8,7 @@ import {
   Column,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -19,6 +21,9 @@ export enum Position {
 
 @Entity()
 export class User {
+  static createQueryBuilder(arg0: string) {
+    throw new Error('Method not implemented.');
+  }
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -35,8 +40,8 @@ export class User {
   @Column()
   password: string;
 
-  @Column()
-  role: string;
+  @Column('text', { array: true, nullable: true })
+  roles: Role[];
 
   @Column()
   contact: number;
@@ -57,7 +62,7 @@ export class User {
   @JoinColumn()
   sponsor?: User;
 
-  @OneToOne(() => Plan, {
+  @ManyToOne(() => Plan, {
     eager: true,
     cascade: true,
   })
@@ -67,37 +72,37 @@ export class User {
   @Column({ type: 'enum', enum: Position, nullable: true })
   position: string;
 
-  @Column('int', { default: 0 })
+  @Column('decimal', { default: 0 })
   balance: number;
 
-  @Column('int', { default: 0 })
+  @Column('decimal', { default: 0 })
   total_referral_bonus: number;
 
-  @Column('int', { default: 0 })
+  @Column('decimal', { default: 0 })
   total_bonus: number;
 
   // @Column('int', { default: 0 })
   // totalBV: number;
 
-  @Column('int', { default: 0 })
+  @Column('decimal', { default: 0 })
   total_bv_left: number;
 
-  @Column('int', { default: 0 })
+  @Column('decimal', { default: 0 })
   total_bv_right: number;
 
-  @Column('int', { default: 0 })
+  @Column('decimal', { default: 0 })
   upgrade_wallet: number;
 
-  @Column('int', { default: 0 })
+  @Column('decimal', { default: 0 })
   shopping_wallet: number;
 
-  @Column('int', { default: 0 })
+  @Column('decimal', { default: 0 })
   total_investment: number;
 
-  @Column('int', { default: 0 })
+  @Column('decimal', { default: 0 })
   matching_bonus: number;
 
-  @Column('int', { default: 0 })
+  @Column('decimal', { default: 0 })
   binary_bonus: number;
 
   @Column('boolean', { default: false })

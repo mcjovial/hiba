@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsEmail,
   IsNotEmpty,
   IsNumber,
@@ -6,6 +7,7 @@ import {
   IsString,
   Length,
 } from 'class-validator';
+import { Role } from 'src/common/enums';
 import { Plan } from 'src/plans/entities/plan.entity';
 import { User } from '../entities/user.entity';
 
@@ -26,9 +28,9 @@ export default class UpdateUserDto {
   @IsOptional()
   contact?: number;
 
-  @IsString()
+  @IsArray()
   @IsOptional()
-  role?: string;
+  roles: Role[];
 
   @IsString()
   @IsOptional()

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { generateTrx } from 'src/common/helpers';
 import { Paystack } from 'src/common/utils/paystack';
 import { CustomNotFoundException } from 'src/users/customNotFound.exception';
+import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { CreateDepositDto } from './dto/create-deposit.dto';
@@ -22,7 +23,6 @@ export class DepositsService {
   async create(createDepositDto: CreateDepositDto) {
     const newDeposit = this.depositsRepository.create({
       ...createDepositDto,
-      trxn: generateTrx(),
     });
     await this.depositsRepository.save(newDeposit);
     // topup user's account
@@ -30,15 +30,15 @@ export class DepositsService {
     return newDeposit;
   }
 
-  async subscribe(subscribeDto: SubscribeDto) {
+  async subscribe(subscribeDto: SubscribeDto, user: User) {
+    console.log(user);
+
     const { amount, plan } = subscribeDto;
     const purpose = 'plan-subscription';
-    const email = 'emmanuelelias@gmail.com';
-    const user = 'hq9f9w7v37dnd8edhdb8e';
     const transaction = await this.paystack.initializedTransaction({
       amount: amount * 100,
-      email,
-      metadata: { purpose, plan, user },
+      email: user.email,
+      metadata: { purpose, planId: plan, userId: user.id },
     });
 
     if (!transaction.status) {
@@ -60,18 +60,24 @@ export class DepositsService {
     }
 
     const {
-      amount,
       reference,
       customer: { email },
-      metadata: { purpose, plan, user },
+      metadata: { purpose, planId, userId },
     } = transaction.data;
+    const amount = transaction.data.amount / 100;
 
-    // save deposit and create transaction
-    this.create({ plan, user, purpose, amount });
-    // debit plan amount and create transaction
-    this.userService.debitUser(user, amount, 'plan_subscription');
+    // // save deposit and create transaction
+    // this.create({
+    //   plan: planId,
+    //   user: userId,
+    //   purpose,
+    //   amount,
+    //   trxn: reference,
+    // });
+    // // debit plan amount and create transaction
+    // this.userService.debitUser(userId, amount, 'plan_subscription');
     // attach plan and perks to user
-    this.userService.subscribeUserToPlan(plan, user);
+    this.userService.subscribeUserToPlan(planId, userId);
   }
 
   async findAll() {

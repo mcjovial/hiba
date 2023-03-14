@@ -10,19 +10,24 @@ import CreateUserDto from './dto/create-user.dto';
 import UpdateUserDto from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import { Role } from 'src/common/enums';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    private readonly transactionService: TransactionsService,
-    private readonly bvLogService: BvLogsService,
-    private readonly planService: PlansService,
+    private transactionService: TransactionsService,
+    private bvLogService: BvLogsService,
+    private planService: PlansService,
   ) {}
 
   async create(userData: CreateUserDto) {
-    userData.role = 'customer';
+    if ((await this.getAllUsers()).count == 0) {
+      userData.roles = [Role.Admin];
+    } else {
+      userData.roles = [Role.Customer];
+    }
     const newUser = this.userRepository.create(userData);
     await this.userRepository.save(newUser);
     return newUser;
@@ -120,7 +125,9 @@ export class UsersService {
     const heap = [await this.findOne(id)];
     let tid = id;
     for (let i = 0; i < userCount; i++) {
-      if (i != 0) tid = heap[i].id;
+      if (i != 0) {
+        tid = heap[i]?.id;
+      }
       heap.push((await this.getPositionUser(tid, 'left')) || undefined);
       heap.push((await this.getPositionUser(tid, 'right')) || undefined);
     }
@@ -165,7 +172,7 @@ export class UsersService {
       postBalance: (await this.findOne(id)).balance,
       amount,
       trx: generateTrx(),
-      trxType: '+',
+      trxType: '-',
       details: purpose,
     });
     return true;
@@ -173,18 +180,24 @@ export class UsersService {
 
   async subscribeUserToPlan(planId: string, userId: string) {
     const plan = await this.planService.findOne(planId);
+    const user = await this.findOne(userId);
+
     await this.userRepository
       .createQueryBuilder('user')
       .update(User)
       .set({
         plan: plan,
+        isHibaActive: true,
         balance: () => `balance + ${plan.bv}`,
         shopping_wallet: () => `shopping_wallet + ${plan.coupon}`,
       })
       .where('id = :id', { id: userId })
       .execute();
 
-    this.updateBV(userId);
+    await this.referralComission(userId);
+    await this.binaryBonus(user.sponsor.id, user.position);
+    await this.matchingBonus(user.referrer.id);
+    await this.updateBV(user);
   }
 
   async massIncrement(num: number) {
@@ -213,14 +226,13 @@ export class UsersService {
       user.matching_bonus == 0
     ) {
       let amount: number, position: string;
-      if (userTree[2].total_bonus > userTree[1].total_bonus) {
-        amount = userTree[1].total_bonus * 0.15;
-        position = userTree[1].position;
+      if (userTree[2].total_bonus > userTree[1]?.total_bonus) {
+        amount = userTree[1]?.total_bonus * 0.15;
+        position = userTree[1]?.position;
       } else {
-        amount = userTree[2].total_bonus * 0.15;
-        position = userTree[2].position;
+        amount = userTree[2]?.total_bonus * 0.15;
+        position = userTree[2]?.position;
       }
-
       // pre-transaction
       const pre_transaction = await this.transactionService.create({
         user: user,
@@ -303,14 +315,13 @@ export class UsersService {
   async referralComission(id: any) {
     const user = await this.findOne(id);
     if (user.referrer) {
-      const referral_comission = await this.getComission(
+      const referral_comission = this.getComission(
         user.plan.bv,
         user.referrer.plan.referralBonus,
       );
-
       // check if the referrer has a lower plan
       if (user.referrer.plan.price < user.plan.price) {
-        const higher_ref_comission = await this.getComission(
+        const higher_ref_comission = this.getComission(
           referral_comission,
           user.referrer.plan.higherReferralBonus,
         );
@@ -324,7 +335,6 @@ export class UsersService {
           .createQueryBuilder('user')
           .update(User)
           .set({
-            // total_referral_bonus: 9,
             balance: () => `balance + ${higher_ref_comission}`,
             total_referral_bonus: () =>
               `total_referral_bonus + ${higher_ref_comission}`,
@@ -418,69 +428,62 @@ export class UsersService {
     return (amount * percentge) / 100;
   }
 
-  async updateBV(id: string) {
-    // const reward = await getComission(bv, 15);
-    const user = await this.findOne(id);
-    if (user) {
-      await this.binaryBonus(user.sponsor.id, user.position);
-      await this.matchingBonus(user.referrer.id);
+  async updateBV(user: User) {
+    if (user.referrer) {
+      // check new user's position on referrer's tree to determine reward
+      const referrerTree = await this.getUserTree(user.referrer.id);
+      const treeIds = [];
+      for (const u of referrerTree) {
+        treeIds.push(u?.id);
+      }
+      const userPositionOnReferrerTree = treeIds.indexOf(user.id);
+      let value: number, reward: number;
 
-      if (user.referrer) {
-        // check new user's position on referrer's tree to determine reward
-        const referrerTree = await this.getUserTree(user.referrer.id);
-        const userPositionOnReferrerTree = referrerTree.indexOf(user);
-        let value: number, reward: number;
+      if (user.referrer.total_bv_left > user.referrer.total_bv_right) {
+        value = user.referrer.total_bv_right;
+      } else {
+        value = user.referrer.total_bv_left;
+      }
 
-        if (user.referrer.total_bv_left > user.referrer.total_bv_right) {
-          value = user.referrer.total_bv_right;
-        } else {
-          value = user.referrer.total_bv_left;
-        }
+      function between(x: number, min: number, max: number) {
+        return x >= min && x <= max;
+      }
+      // 6th - 8th
+      if (between(userPositionOnReferrerTree, 63, 510)) {
+        reward = this.getComission(value, 5);
+      }
+      console.log('final', reward);
 
-        function between(x: number, min: number, max: number) {
-          return x >= min && x <= max;
-        }
-        // 6th - 8th
-        if (between(userPositionOnReferrerTree, 63, 510)) {
-          reward = this.getComission(value, 5);
-        }
-        // 9th - 12th
-        if (between(userPositionOnReferrerTree, 63, 510)) {
-          reward = this.getComission(value, 3);
-        }
-        // 13th - 16th
-        if (between(userPositionOnReferrerTree, 63, 510)) {
-          reward = this.getComission(value, 2);
-        }
-        // 17th - 20th
-        if (between(userPositionOnReferrerTree, 63, 510)) {
-          reward = this.getComission(value, 1);
-        }
-        // 21th - 25th
-        if (between(userPositionOnReferrerTree, 63, 510)) {
-          reward = this.getComission(value, 0.5);
-        }
+      // 9th - 12th
+      if (between(userPositionOnReferrerTree, 63, 510)) {
+        reward = this.getComission(value, 3);
+      }
+      // 13th - 16th
+      if (between(userPositionOnReferrerTree, 63, 510)) {
+        reward = this.getComission(value, 2);
+      }
+      // 17th - 20th
+      if (between(userPositionOnReferrerTree, 63, 510)) {
+        reward = this.getComission(value, 1);
+      }
+      // 21th - 25th
+      if (between(userPositionOnReferrerTree, 63, 510)) {
+        reward = this.getComission(value, 0.5);
+      }
 
+      if (reward) {
         // pre-transaction
         const pre_transaction = await this.transactionService.create({
           user: user.referrer,
           preBalance: user.referrer.balance,
         });
-        // award bonus
-        await this.userRepository
-          .createQueryBuilder('user')
-          .update(User)
-          .set({
-            // total_referral_bonus: 9,
-            balance: () => `balance + ${reward}`,
-            total_bonus: () => `total_bonus + ${reward}`,
-          })
-          .where('id = :id', { id: user.referrer.id })
-          .execute();
+
+        await this.groupSalesBonus(user.referrer.id, reward);
+
         // post-transaction
         await this.transactionService.update(pre_transaction.id, {
           charge: 0,
-          postBalance: (await this.findOne(id)).balance,
+          postBalance: (await this.findOne(user.referrer.id)).balance,
           amount: reward,
           trx: generateTrx(),
           trxType: '+',
@@ -495,5 +498,19 @@ export class UsersService {
         });
       }
     }
+  }
+
+  async groupSalesBonus(id: any, reward: any) {
+    await this.userRepository
+      .createQueryBuilder()
+      .update(User)
+      .set({
+        balance: () => `balance + ${reward}`,
+        total_bonus: () => `total_bonus + ${reward}`,
+      })
+      .where('id = :id', { id })
+      .execute();
+
+    console.log('he', id, reward);
   }
 }

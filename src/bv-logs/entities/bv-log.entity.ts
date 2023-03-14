@@ -22,7 +22,7 @@ export class BvLog {
   @Column({ type: 'enum', enum: Position })
   position: string;
 
-  @Column('int', { nullable: true })
+  @Column('decimal', { nullable: true })
   amount: number;
 
   @Column('text', { nullable: true })

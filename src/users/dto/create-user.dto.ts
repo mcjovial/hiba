@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsEmail,
   IsNotEmpty,
   IsNumber,
@@ -6,6 +7,7 @@ import {
   IsString,
   Length,
 } from 'class-validator';
+import { Role } from 'src/common/enums';
 import { User } from '../entities/user.entity';
 
 export default class CreateUserDto {
@@ -22,9 +24,9 @@ export default class CreateUserDto {
   @IsNumber()
   contact: number;
 
-  @IsString()
+  @IsArray()
   @IsOptional()
-  role?: string;
+  roles: Role[];
 
   @IsString()
   @IsOptional()

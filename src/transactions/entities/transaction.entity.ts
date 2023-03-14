@@ -19,16 +19,16 @@ export class Transaction {
   @JoinColumn()
   user: User;
 
-  @Column('int', { nullable: true })
+  @Column({ type: 'decimal', nullable: true })
   amount: number;
 
-  @Column('int', { nullable: true })
+  @Column({ type: 'decimal', nullable: true })
   charge: number;
 
-  @Column('int', { nullable: true })
+  @Column({ type: 'decimal', nullable: true })
   postBalance: number;
 
-  @Column('int')
+  @Column('decimal', { nullable: true })
   preBalance: number;
 
   @Column('text', { nullable: true })

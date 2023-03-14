@@ -6,7 +6,12 @@ import {
   Patch,
   Param,
   Delete,
+  Req,
+  UseGuards,
+  Query,
 } from '@nestjs/common';
+import JwtAuthenticationGuard from 'src/common/guards/jwt-authentication.guard';
+import { RequestWithUser } from 'src/common/interfaces/request-with-user.interface';
 import { DepositsService } from './deposits.service';
 import { CreateDepositDto } from './dto/create-deposit.dto';
 import { SubscribeDto } from './dto/subscription.dto';
@@ -22,8 +27,17 @@ export class DepositsController {
   }
 
   @Post('paystack')
-  subscribe(@Body() subscribeDto: SubscribeDto) {
-    return this.depositsService.subscribe(subscribeDto);
+  @UseGuards(JwtAuthenticationGuard)
+  subscribe(
+    @Body() subscribeDto: SubscribeDto,
+    @Req() request: RequestWithUser,
+  ) {
+    return this.depositsService.subscribe(subscribeDto, request.user);
+  }
+
+  @Get('paystack')
+  verifySubscription(@Query() query: any) {
+    return this.depositsService.verifySubscription(query.trxref);
   }
 
   @Get()
